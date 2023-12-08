@@ -1,11 +1,12 @@
 const express = require("express");
-const {
-  InvoiceHeader,
-  InvoiceItem,
-  BillSundry,
-} = require("../models/invoiceItem");
+const InvoiceItem = require("../models/invoiceItem");
 
 const router = express.Router();
+
+router.get("/", async (req, res) => {
+    const invoices = await InvoiceItem.find()
+    res.status(200).json(invoices)
+});
 
 router.post("/", async (req, res) => {
   const { id, itemName, quantity, price } = req.body;
@@ -13,7 +14,7 @@ router.post("/", async (req, res) => {
   if (quantity <= 0 || price <= 0 || amount <= 0) {
     res.send({ message: "Quantity or price cannot be zero" });
   } else {
-    const postRes = await new InvoiceItem.insertMany({
+    const postRes = await InvoiceItem.create({
       id,
       itemName,
       quantity,
@@ -24,42 +25,37 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async(req, res) => {
-    const invoiceId = req.params.id;
-    const invoiceFound = await InvoiceItem.findById({invoiceId})
-    if (!invoiceFound){
-        res.send({message: "Invoice does not exist"})
-    }else{
-        const updatedInvoice = await InvoiceItem.updateOne(req.body)
-        res.send(updatedInvoice);
-    }
+router.put("/:id", async (req, res) => {
+  const invoiceId = req.params.id;
+  const invoiceFound = await InvoiceItem.findById(invoiceId);
+  if (!invoiceFound) {
+    res.send({ message: "Invoice does not exist" });
+  } else {
+    const updatedInvoice = await InvoiceItem.findByIdAndUpdate(invoiceId, req.body, {new:true});
+    res.status(200).json(updatedInvoice);
+  }
 });
 
-router.delete("/:id", async(req, res) => {
-    const invoiceId = req.params.id;
-    const invoiceFound = await InvoiceItem.findById({invoiceId})
-    if (!invoiceFound){
-        res.send({message: "Invoice does not exist"})
-    }else{
-        await InvoiceItem.findByIdAndDelete({invoiceId})
-        res.send("deleted invoice");
-    }
+router.delete("/:id", async (req, res) => {
+  const invoiceId = req.params.id;
+  const invoiceFound = await InvoiceItem.findById({ invoiceId });
+  if (!invoiceFound) {
+    res.send({ message: "Invoice does not exist" });
+  } else {
+    await invoiceFound.remove()
+    res.status(200).json(invoiceFound);
+  }
 });
 
-router.get("/:id", async(req, res) => {
-    const invoiceId = req.params.id;
-    const invoiceFound = await InvoiceItem.findById({invoiceId})
-    if (!invoiceFound){
-        res.send({message: "Invoice does not exist"})
-    }else{
-        const invoice = await InvoiceItem.findOne({invoiceId})
-        res.send(invoice);
-    }
+router.get("/:id", async (req, res) => {
+  const invoiceId = req.params.id;
+  const invoiceFound = await InvoiceItem.findById(invoiceId );
+  if (!invoiceFound) {
+    res.send({ message: "Invoice does not exist" });
+  } else {
+    res.status(200).json(invoiceFound);
+  }
 });
 
-router.get("/", async(req, res) => {
-  const invoices = await InvoiceItem.find()
-  res.send(invoices)
-});
 
 module.exports = router;
